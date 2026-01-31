@@ -11,7 +11,7 @@
     "target": "es2019",
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "types": [],
+    "types": ["jest", "node"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -42,5 +42,6 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true
-  }
+  },
+  "exclude": ["_tests_"]
 }
