@@ -1,6 +1,6 @@
 import express from 'express';
-import { addTestsRoutes } from './routes/tests';
-import { addCoursesRoutes } from './routes/courses';
+import { getTestsRouter } from './routes/tests';
+import { getCoursesRouter } from './routes/courses';
 import { db } from './db/db';
 
 export const app = express();
@@ -8,5 +8,5 @@ export const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-addCoursesRoutes(app, db);
-addTestsRoutes(app, db);
+app.use('/courses', getCoursesRouter(db));
+app.use('/__tests__', getTestsRouter(db));

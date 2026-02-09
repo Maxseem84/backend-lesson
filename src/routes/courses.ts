@@ -1,4 +1,4 @@
-import { Express, Response } from 'express';
+import express, { Response } from 'express';
 import {
   RequestWithQuery,
   RequestWithBody,
@@ -11,15 +11,7 @@ import { CourseViewModel } from '../models/CourseViewModel';
 import { UpdateCourseModel } from '../models/UpdateCourseModel';
 import { URIParamsCourseIdModel } from '../models/URIParamsCoursIdModel';
 import { CourseType, DBType } from './../db/db';
-
-export const HTTP_STATUSES = {
-  OK_200: 200,
-  CREATED_201: 201,
-  NO_CONTENT_204: 204,
-
-  BAD_REQUEST_400: 400,
-  NOT_FOUND_404: 404,
-};
+import { HTTP_STATUSES } from '../utils';
 
 const getCourseViewModel = (dbCourse: CourseType): CourseViewModel => {
   return {
@@ -28,21 +20,21 @@ const getCourseViewModel = (dbCourse: CourseType): CourseViewModel => {
   };
 };
 
-export const addCoursesRoutes = (app: Express, db: DBType) => {
-  app.get(
-    '/courses',
-    (req: RequestWithQuery<QueryCoursesModel>, res: Response<CourseViewModel[]>) => {
-      const courses = db.courses;
-      const title = typeof req.query.title === 'string' ? req.query.title.toLowerCase() : undefined;
-      if (title) {
-        return res.json(courses.filter((c) => c.title.toLowerCase().includes(title)));
-      }
-      return res.json(courses.map(getCourseViewModel));
-    },
-  );
+export const getCoursesRouter = (db: DBType) => {
+  const router = express.Router();
+  router.get('/', (req: RequestWithQuery<QueryCoursesModel>, res: Response<CourseViewModel[]>) => {
+    const courses = db.courses;
+    const title = typeof req.query.title === 'string' ? req.query.title.toLowerCase() : undefined;
+    if (title) {
+      return res.json(
+        courses.filter((c) => c.title.toLowerCase().includes(title)).map(getCourseViewModel),
+      );
+    }
+    return res.json(courses.map(getCourseViewModel));
+  });
 
-  app.get(
-    '/courses/:id',
+  router.get(
+    '/:id',
     (req: RequestWithParams<URIParamsCourseIdModel>, res: Response<CourseViewModel>) => {
       const id = Number(req.params.id);
       if (Number.isNaN(id)) {
@@ -56,25 +48,22 @@ export const addCoursesRoutes = (app: Express, db: DBType) => {
     },
   );
 
-  app.post(
-    '/courses',
-    (req: RequestWithBody<CreateCourseModel>, res: Response<CourseViewModel>) => {
-      const title = req.body.title;
-      if (typeof title !== 'string' || !title.trim()) {
-        return res.sendStatus(HTTP_STATUSES.BAD_REQUEST_400);
-      }
-      const createdCourse: CourseType = {
-        id: Date.now(),
-        title: title.trim(),
-        studentsCount: 0,
-      };
-      db.courses.push(createdCourse);
-      res.status(HTTP_STATUSES.CREATED_201).json(getCourseViewModel(createdCourse));
-    },
-  );
+  router.post('/', (req: RequestWithBody<CreateCourseModel>, res: Response<CourseViewModel>) => {
+    const title = req.body.title;
+    if (typeof title !== 'string' || !title.trim()) {
+      return res.sendStatus(HTTP_STATUSES.BAD_REQUEST_400);
+    }
+    const createdCourse: CourseType = {
+      id: Date.now(),
+      title: title.trim(),
+      studentsCount: 0,
+    };
+    db.courses.push(createdCourse);
+    res.status(HTTP_STATUSES.CREATED_201).json(getCourseViewModel(createdCourse));
+  });
 
-  app.put(
-    '/courses/:id',
+  router.put(
+    '/:id',
     (req: RequestWithParamsAndBody<URIParamsCourseIdModel, UpdateCourseModel>, res: Response) => {
       const id = Number(req.params.id);
       if (Number.isNaN(id)) {
@@ -93,7 +82,7 @@ export const addCoursesRoutes = (app: Express, db: DBType) => {
     },
   );
 
-  app.delete('/courses/:id', (req: RequestWithParams<URIParamsCourseIdModel>, res: Response) => {
+  router.delete('/:id', (req: RequestWithParams<URIParamsCourseIdModel>, res: Response) => {
     const id = Number(req.params.id);
     if (Number.isNaN(id)) {
       return res.sendStatus(HTTP_STATUSES.BAD_REQUEST_400);
@@ -105,4 +94,19 @@ export const addCoursesRoutes = (app: Express, db: DBType) => {
     }
     return res.sendStatus(HTTP_STATUSES.NO_CONTENT_204);
   });
+
+  return router;
 };
+
+// export const getInterestingRouter = () => {
+//   const router = express.Router();
+//   router.get('/books', (req: Request, res: Response) => {
+//     return res.json({ title: 'its books handler' });
+//   });
+
+//   router.get('/:id', (req: Request, res: Response) => {
+//     return res.json({ title: 'data by id: ' + req.params.id });
+//   });
+
+//   return router;
+// };
